@@ -1,41 +1,93 @@
 import gspread
+from gspread_formatting import *
+from gspread_formatting.batch_update_requests import format_cell_range
 import pandas as pd
+import numpy as np
 from oauth2client.service_account import ServiceAccountCredentials
 
 
 class Sheet():
 
-    def __init__(self) -> None:
+    def __init__(self):
+        # Target
         scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+        # Credentials
         creds = ServiceAccountCredentials.from_json_keyfile_name('nails_json_key.json', scope)
+        # Client for API
         client = gspread.authorize(creds)
 
-        self.sheet = client.open('Order List')
-        # Find by sheet name instad of index?
-        self.client_names = {'A':1, 'B':2}
+        # Open 'Order Sheet' Google Sheet
+        self.sheet = client.open('Order Sheet')
+        self.client_names = ['Sheet-1','Sheet-2','Sheet-3','Sheet-4','Sheet-5']
+
+        self.update_client_sheet('Sheet-1', pd.DataFrame({'Item Number':['01','001','100'], 'Quantity':[9997,9998,9999]}))
 
 
+
+    # Updates appointed client's sheet
+    # Order in format: df('Item Number': [n1,n2,n3], 'Quantity':[q1, q2, q3])
     def update_client_sheet(self, client, order):
-        ind = self.client_names[client]
-        worksheet_instance = self.sheet.get_worksheet(ind)
-        worksheet_prev_records = self.get_all_records(worksheet_instance)
+        worksheet_instance = self.sheet.worksheet(client)
 
-        worksheet_updated_records = worksheet_prev_records.add(order, fill_value = 0)
-        # worksheet_instance.
+        current_data = self.get_current_data(worksheet_instance)
+        order_data = self.get_order_data(order)
+        updated_data = current_data + order_data
 
+        locations = ['H','K','N','Q','T','W','Z','AC','AF','AI','AL']
+        ind = 0
+        fmt = CellFormat(backgroundColor=Color((1,1,1)))
+        for col in updated_data:
+            lst_col = self.lots_list(col)
+            # Sheet Indices (1 Index)
+            location = locations[ind]+'4:'+locations[ind]+'103'
+            # Update location with new column
+            worksheet_instance.update(location, lst_col)
+            format_cell_range(worksheet_instance, location, fmt)
+
+            ind += 1
 
 
     # def update_master_sheet(self, client, )
 
-    
-    def get_all_records(self, sheet_instance):
-        all_records = sheet_instance.get_all_records()
-        return(pd.DataFrame(all_records))
+    # 1 Index, Return numpy array of orders/0s
+    def get_current_data(self, worksheet_instance):
+        current_data = np.zeros((11, 100))
+        column = 1
+        ind = 0
+        for cell in worksheet_instance.row_values(3):
+            if cell == 'Numbers':
+                # Column + 1 bc get Quantity 
+                current_data[ind] += np.array(worksheet_instance.col_values(column+1)[3:103]).astype(int)
+                ind += 1
+            column += 1
+
+        return current_data
+
+    def get_order_data(self, order):
+        order_data = np.zeros((11, 100))
+        item_ind = 0
+        for item in order['Item Number']:
+            if len(item) == 2:
+                item_num = int(item)
+                order_data[0, item_num] += order['Quantity'][item_ind]
+            else:
+                item_col = int(item[0]) + 1
+                item_num = int(item)
+                order_data[item_col, item_num%100] += order['Quantity'][item_ind]
+            item_ind += 1
+
+        return order_data    
+        
 
 
+    def lots_list(self, col):
+        list_list = []
+        for i in range(100):
+            list_list.append([col[i]])
+
+        return list_list
 
 
 
 if __name__ == '__main__':
     S = Sheet()
-    print(S.all_records)

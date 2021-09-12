@@ -4,7 +4,10 @@ Twilio Instructions (My number = (786) 789-2182)
 3. Go to active numbers, messaging
 4. Start ngrok server
     ngrok http 5000, http://34ab-100-40-127-100.ngrok.io
-    Google act: syamamo1@advance-rush-325523.iam.gserviceaccount.com, syamamo1
 5. Paste link to twilio under "a message comes in" AND ADD /sms!!!!!
 6. Run reciever.py
 7. Test ready! 
+
+Google Sheets Instructions: (Google act: syamamo1@advance-rush-325523.iam.gserviceaccount.com, syamamo1)
+1. Share sheet w email above ^^
+2. Edit sheet name in sheets class

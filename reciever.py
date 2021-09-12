@@ -53,16 +53,18 @@ def send_order(body):
     client = gspread.authorize(creds)
     # ----------------------------------------------------------
 
-
+# Int, Int
 def df_maker(body):
     quantities = []
     items = []
     for order in body.split('/n'):
         quantity, item = quantity_item_parser(order)
-        quantities.append(quantity)
+        quantities.append(int(quantity))
         items.append(item)
 
-    return pd.DataFrame(quantities, items)
+    # String, Int
+    dict_order = {'Item Number':items, 'Quantity':quantities}
+    return pd.DataFrame(dict_order)
 
 
 def sms_confirmation(body):
@@ -106,7 +108,7 @@ def detailer(body):
     else:
         return 'Not Found', customer
 
-# Just quantity;:/-item\n pattern 
+# Input just quantity;:/-item\n pattern 
 def quantity_item_parser(order):
     order_split = re.split('\W+', order)
     
