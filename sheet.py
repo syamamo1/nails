@@ -1,14 +1,13 @@
 import gspread
 from gspread_formatting import *
 from gspread_formatting.batch_update_requests import format_cell_range
-import pandas as pd
 import numpy as np
 from oauth2client.service_account import ServiceAccountCredentials
 
 
 class Sheet():
 
-    def __init__(self):
+    def __init__(self, client_names):
         # Target
         scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
         # Credentials
@@ -18,10 +17,10 @@ class Sheet():
 
         # Open 'Order Sheet' Google Sheet
         self.sheet = client.open('Order Sheet')
-        self.client_names = ['Sheet-1','Sheet-2','Sheet-3','Sheet-4','Sheet-5']
+        # NEEDS TO BE UPDATED AS SOME POINT
+        self.client_names = client_names
 
-        self.update_client_sheet('Sheet-1', pd.DataFrame({'Item Number':['01','001','100'], 'Quantity':[9997,9998,9999]}))
-
+        # self.update_client_sheet('Sheet-1', pd.DataFrame({'Item Number':['01','001','101'], 'Quantity':[9997,9998,9999]}))
 
 
     # Updates appointed client's sheet
@@ -33,12 +32,13 @@ class Sheet():
         order_data = self.get_order_data(order)
         updated_data = current_data + order_data
 
+        # Sheets Column Headers
         locations = ['H','K','N','Q','T','W','Z','AC','AF','AI','AL']
         ind = 0
         fmt = CellFormat(backgroundColor=Color((1,1,1)))
         for col in updated_data:
             lst_col = self.lots_list(col)
-            # Sheet Indices (1 Index)
+            # Sheet Indices (1 Index, row 4 to row 103)
             location = locations[ind]+'4:'+locations[ind]+'103'
             # Update location with new column
             worksheet_instance.update(location, lst_col)
@@ -46,8 +46,6 @@ class Sheet():
 
             ind += 1
 
-
-    # def update_master_sheet(self, client, )
 
     # 1 Index, Return numpy array of orders/0s
     def get_current_data(self, worksheet_instance):
@@ -62,6 +60,7 @@ class Sheet():
             column += 1
 
         return current_data
+
 
     def get_order_data(self, order):
         order_data = np.zeros((11, 100))
@@ -78,8 +77,7 @@ class Sheet():
 
         return order_data    
         
-
-
+    # Formatting for gspread update method
     def lots_list(self, col):
         list_list = []
         for i in range(100):
